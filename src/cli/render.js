@@ -13,6 +13,10 @@ function line(label, value, width = 22) {
   return labelValue(label, value, width);
 }
 
+function expenseMoney(cents) {
+  return money(cents === 0 ? 0 : -cents);
+}
+
 export function renderAccounts(accounts) {
   const rows = accounts.map((account) => [
     account.name,
@@ -73,6 +77,9 @@ export function renderForecast(forecast) {
     `Previsão de ${month(forecast.targetMonth)}`,
     '',
     line('Receitas previstas', money(forecast.incomePlannedCents)),
+    line('Contas fixas', expenseMoney(forecast.fixedExpensePlannedCents)),
+    line('Contratos', expenseMoney(forecast.contractExpensePlannedCents)),
+    line('Outros', expenseMoney(forecast.otherExpensePlannedCents)),
     line('Despesas previstas', money(forecast.expensePlannedCents)),
     line('Fluxo previsto', money(forecast.flowPlannedCents)),
     line('Aporte planejado', money(forecast.plannedContributionCents)),
@@ -208,7 +215,7 @@ export function renderWeek(week) {
   return lines.join('\n');
 }
 
-export function renderGoal(progress) {
+export function renderGoal(progress, projection = null) {
   const lines = [
     `Meta: ${progress.goal.name}`,
     '',
@@ -236,10 +243,66 @@ export function renderGoal(progress) {
 
   lines.push(line('Aportes registrados', money(progress.contributionsCents)));
   lines.push(line('Retiradas registradas', money(progress.withdrawalsCents)));
+
+  if (projection && projection.months.length > 0) {
+    lines.push('', `Projeção até ${month(projection.targetMonth)}`, '');
+
+    const rows = projection.months.map((row) => [
+      month(row.month),
+      money(row.incomeCents),
+      expenseMoney(row.fixedExpenseCents),
+      expenseMoney(row.contractExpenseCents),
+      expenseMoney(row.otherExpenseCents),
+      money(row.availableCents),
+      money(row.contributionCents),
+      money(row.remainderCents),
+      money(row.savingsBalanceCents),
+    ]);
+
+    rows.push([
+      'Total',
+      money(projection.totalIncomeCents),
+      expenseMoney(projection.totalFixedExpenseCents),
+      expenseMoney(projection.totalContractExpenseCents),
+      expenseMoney(projection.totalOtherExpenseCents),
+      money(projection.totalAvailableCents),
+      money(projection.totalContributionCents),
+      money(projection.totalRemainderCents),
+      '-',
+    ]);
+
+    lines.push(
+      renderTable(
+        ['Mês', 'Entradas', 'Fixas', 'Contratos', 'Outros', 'Disponível', 'Aporte', 'Sobra', 'Cofrinho'],
+        rows,
+        ['left', 'right', 'right', 'right', 'right', 'right', 'right', 'right', 'right'],
+      ),
+    );
+
+    const remaining = projection.projectedSavingsCents - projection.goal.targetCents;
+    lines.push('');
+    lines.push(
+      line(
+        'Compra em',
+        `${month(projection.targetMonth)}: ${money(projection.goal.targetCents)}`,
+      ),
+    );
+    lines.push(
+      remaining >= 0
+        ? line('Sobra após a compra', money(remaining))
+        : line('Falta para a compra', money(Math.abs(remaining))),
+    );
+  }
+
   return lines.join('\n');
 }
 
 export function renderSimulation(simulation) {
+  const restante =
+    simulation.remainingSavingsCents >= 0
+      ? line('Restante', money(simulation.remainingSavingsCents))
+      : line('Falta', money(Math.abs(simulation.remainingSavingsCents)));
+
   const lines = [
     'Simulação da moto',
     '',
@@ -248,23 +311,46 @@ export function renderSimulation(simulation) {
       `${month(simulation.purchaseMonth)} (${simulation.monthsUntilPurchase} aportes)`,
     ),
     line('Cofrinho projetado', money(simulation.projectedSavingsCents)),
-    line('Entrada + 1ª parcela', money(simulation.purchaseOutlayCents)),
-    line('Restante', money(simulation.remainingSavingsCents)),
-    line(
-      'Parcela',
-      `${money(simulation.installmentCents)} × ${simulation.installments}`,
-    ),
+    '',
+    line('CNH', money(simulation.cnhCents)),
+    line('Entrada', money(simulation.entryCents)),
+    line('1ª parcela', money(simulation.installmentCents)),
+    line('Capacete', money(simulation.helmetCents)),
+    line('Total do desembolso', money(simulation.purchaseOutlayCents)),
+    restante,
+    '',
+    line('Parcela', `${money(simulation.installmentCents)} × ${simulation.installments}`),
     line('Total financiado', money(simulation.totalFinancedCents)),
+    line('Entrada + parcelas', money(simulation.totalPurchaseCents)),
     line('Fluxo pós-compra', money(simulation.monthlyFlowCents)),
-    line('Com aporte mantido', money(simulation.flowWithContributionCents)),
-    line('Última parcela', month(simulation.lastInstallmentMonth)),
-    line(
-      'Cobertura do restante',
-      simulation.coverageMonths === null
-        ? 'sem déficit mensal'
-        : `${simulation.coverageMonths} meses`,
-    ),
   ];
+
+  if (simulation.contractsCents > 0) {
+    lines.push(
+      line(
+        'Contratos ativos',
+        `${money(simulation.contractsCents)}/mês até ${
+          simulation.lastContractMonth ? month(simulation.lastContractMonth) : 'o fim'
+        }`,
+      ),
+    );
+    lines.push(line('Fluxo após contratos', money(simulation.steadyFlowCents)));
+  }
+
+  lines.push(line('Com aporte mantido', money(simulation.flowWithContributionCents)));
+  lines.push(line('Última parcela', month(simulation.lastInstallmentMonth)));
+  let coverageLabel;
+  if (simulation.coverageMonths === null) {
+    coverageLabel = simulation.remainingSavingsCents >= 0 ? 'sem déficit mensal' : 'restante insuficiente';
+  } else if (simulation.coverageMonths === 0) {
+    coverageLabel = 'menos de 1 mês';
+  } else {
+    coverageLabel = `${simulation.coverageMonths} ${
+      simulation.coverageMonths === 1 ? 'mês' : 'meses'
+    }`;
+  }
+
+  lines.push(line('Cobertura do restante', coverageLabel));
 
   return lines.join('\n');
 }

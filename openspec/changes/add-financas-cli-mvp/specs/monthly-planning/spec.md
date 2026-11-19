@@ -36,12 +36,12 @@ A abertura SHALL considerar apenas regras e contratos ativos, ignorar lançament
 
 ### Requirement: Previsão de mês futuro
 
-O sistema SHALL calcular a previsão de um mês sem gravar lançamentos, mostrando receitas, despesas, fluxo, aporte planejado, disponível após aporte e saldo projetado.
+O sistema SHALL calcular a previsão de um mês sem gravar lançamentos, mostrando receitas, contas fixas, contratos, outros gastos, despesas totais, fluxo, aporte planejado, disponível após aporte e saldo projetado.
 
 #### Scenario: Previsão de janeiro de 2027
 
 - **WHEN** o usuário executa `fin previsao --mes 2027-01`
-- **THEN** o sistema mostra receitas de R$ 1.700,00, despesas de R$ 574,28, fluxo de R$ 1.125,72, aporte planejado de R$ 800,00, disponível de R$ 325,72 e saldo projetado de R$ 1.381,83
+- **THEN** o sistema mostra receitas de R$ 1.700,00, contas fixas de R$ 433,00, contratos de R$ 141,28, outros gastos de R$ 0,00, despesas de R$ 574,28, fluxo de R$ 1.125,72, aporte planejado de R$ 850,00, disponível de R$ 275,72 e saldo projetado de R$ 1.281,83
 
 #### Scenario: Previsão não persiste
 
@@ -55,9 +55,9 @@ O sistema SHALL tratar o aporte mensal da meta como planejamento, não como tran
 #### Scenario: Aporte ideal versus realizado
 
 - **WHEN** o usuário consulta o resumo de dezembro/2026
-- **THEN** o sistema mostra R$ 800,00 de aporte planejado e o saldo real do cofrinho separadamente
+- **THEN** o sistema mostra R$ 850,00 de aporte planejado e o saldo real do cofrinho separadamente
 
 #### Scenario: Aporte menor que o planejado
 
 - **WHEN** o usuário transfere R$ 500,00 para o cofrinho em dezembro
-- **THEN** o cofrinho aumenta R$ 500,00 e o resumo continua exibindo R$ 800,00 como aporte planejado
+- **THEN** o cofrinho aumenta R$ 500,00 e o resumo continua exibindo R$ 850,00 como aporte planejado

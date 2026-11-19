@@ -28,7 +28,7 @@ fin                      # abre o menu interativo
 fin --help               # lista os comandos
 ```
 
-O banco fica em `data/financas.db`. Ele é criado automaticamente e não deve ser versionado.
+O banco fica em `data/financas.db`. Ele é criado automaticamente e não deve ser versionado. Bancos criados antes da revisão do plano de março/2027 recebem as migrações `002_march_2027_plan.sql` e `003_fix_motorcycle_goal.sql` ao rodar `fin init` novamente; as migrações só alteram os valores antigos do seed e preservam lançamentos já registrados.
 
 ## Como os dados funcionam
 
@@ -105,7 +105,7 @@ fin previsao --mes 2027-01
 ```
 
 - `mes abrir` gera os previstos de recorrências e contratos de forma idempotente; rodar duas vezes não duplica.
-- `previsao` não grava nada. Mostra receitas, despesas, fluxo, aporte planejado, disponível e saldos projetados.
+- `previsao` não grava nada. Mostra receitas, contas fixas, contratos, outros gastos, fluxo, aporte planejado, disponível e saldos projetados.
 - O salário é calculado no 5º dia útil, considerando fins de semana e feriados nacionais cadastrados.
 - O 13º é gerado apenas em dezembro.
 - Autoescola entra apenas em dezembro/2026.
@@ -144,13 +144,13 @@ fin semana --data 2026-12-07
 ```bash
 fin meta
 fin simular moto
-fin simular moto --entrada 3500 --parcela 780 --parcelas 48 --mes 2028-03 --aporte 800
+fin simular moto --cnh 100 --entrada 3500 --parcela 780 --parcelas 48 --capacete 500 --mes 2027-03 --aporte 850
 fin simular moto --entrada 3000 --parcela 700 --parcelas 36 --mes 2027-12 --aporte 500
 ```
 
-- A meta padrão é a moto: R$ 3.500,00 até março/2028, com aporte planejado de R$ 800,00/mês.
-- `meta` mostra o saldo do cofrinho, percentual, quanto falta, aportes e retiradas registrados e a projeção no ritmo atual.
-- `simular moto` não grava nada. Calcula o cofrinho projetado, a saída na compra (entrada + primeira parcela), o restante, o fluxo mensal, a última parcela e a cobertura do saldo restante.
+- A meta padrão é a moto: R$ 4.880,00 até março/2027, com aporte planejado de R$ 850,00/mês. O alvo cobre CNH (R$ 100,00), entrada (R$ 3.500,00), primeira parcela (R$ 780,00) e capacete (R$ 500,00).
+- `meta` mostra o saldo do cofrinho, percentual, quanto falta, aportes e retiradas registrados e a projeção no ritmo atual. Também exibe uma tabela mês a mês com entradas, contas fixas, contratos, outros gastos, valor disponível, aporte planejado, sobra e saldo projetado do cofrinho, além da sobra ou falta após a compra.
+- `simular moto` não grava nada. Calcula o cofrinho projetado, o desembolso total, o restante, o fluxo mensal com os contratos ainda ativos, a última parcela e a cobertura do saldo restante. Use `--cnh`, `--entrada`, `--parcela`, `--parcelas`, `--capacete`, `--mes` e `--aporte` para simular outro cenário.
 
 ### Menu interativo
 
@@ -158,7 +158,7 @@ fin simular moto --entrada 3000 --parcela 700 --parcelas 36 --mes 2027-12 --apor
 fin
 ```
 
-O menu mostra o resumo do mês, o saldo das contas, o cofrinho, VA/VT e os gastos da semana. A partir dele é possível registrar gasto ou receita, ver o mês, ver a semana, pagar uma pendência, consultar contratos, ver a previsão do próximo mês, simular a moto e sair.
+O menu mostra o resumo do mês, o saldo das contas, o cofrinho, VA/VT e os gastos da semana. A partir dele é possível registrar gasto ou receita, ver o mês, ver a semana, pagar uma pendência, consultar contratos, ver a meta com a projeção, ver a previsão do próximo mês, simular a moto e sair.
 
 ## Consultando no DB Browser for SQLite
 

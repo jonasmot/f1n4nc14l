@@ -77,7 +77,7 @@ test('fin init cria o banco e é idempotente', () => {
   withTempDatabase(({ path }) => {
     const first = runCli(['init'], path);
     assert.equal(first.code, 0);
-    assert.match(first.stdout, /Migrações aplicadas: 1/);
+    assert.match(first.stdout, /Migrações aplicadas: 3/);
     assert.match(first.stdout, /5 contas, 13 categorias, 5 contratos, 7 recorrências/);
 
     const second = runCli(['init'], path);
@@ -101,15 +101,19 @@ test('abre o mês, mostra resumo e previsão', () => {
     assert.match(summary.stdout, /Receitas previstas\s+R\$ 2\.800,00/);
     assert.match(summary.stdout, /Despesas previstas\s+R\$ 943,89/);
     assert.match(summary.stdout, /Fluxo previsto\s+R\$ 1\.856,11/);
-    assert.match(summary.stdout, /Disponível após aporte\s+R\$ 1\.056,11/);
+    assert.match(summary.stdout, /Disponível após aporte\s+R\$ 1\.006,11/);
     assert.match(summary.stdout, /Contratos restantes\s+R\$ 1\.290,21/);
 
     const forecast = runCli(['previsao', '--mes', '2027-01'], path);
     assert.match(forecast.stdout, /Receitas previstas\s+R\$ 1\.700,00/);
+    assert.match(forecast.stdout, /Contas fixas\s+-R\$ 433,00/);
+    assert.match(forecast.stdout, /Contratos\s+-R\$ 141,28/);
+    assert.match(forecast.stdout, /Outros\s+R\$ 0,00/);
     assert.match(forecast.stdout, /Despesas previstas\s+R\$ 574,28/);
     assert.match(forecast.stdout, /Fluxo previsto\s+R\$ 1\.125,72/);
-    assert.match(forecast.stdout, /Saldo projetado\s+R\$ 1\.381,83/);
-    assert.match(forecast.stdout, /Cofrinho projetado\s+R\$ 3\.300,00/);
+    assert.match(forecast.stdout, /Disponível após aporte\s+R\$ 275,72/);
+    assert.match(forecast.stdout, /Saldo projetado\s+R\$ 1\.281,83/);
+    assert.match(forecast.stdout, /Cofrinho projetado\s+R\$ 3\.200,00/);
   });
 });
 
@@ -154,12 +158,23 @@ test('transfere para o cofrinho e reflete no saldo', () => {
 
     const accounts = runCli(['contas', 'listar'], path);
     assert.match(accounts.stdout, /conta-corrente\s+corrente\s+-R\$ 800,00/);
-    assert.match(accounts.stdout, /cofrinho\s+cofrinho\s+R\$ 2\.500,00/);
+    assert.match(accounts.stdout, /cofrinho\s+cofrinho\s+R\$ 2\.300,00/);
 
     const meta = runCli(['meta'], path);
-    assert.match(meta.stdout, /Progresso\s+71,4%/);
-    assert.match(meta.stdout, /Falta\s+R\$ 1\.000,00/);
+    assert.equal(meta.code, 0);
+    assert.match(meta.stdout, /Progresso\s+47,1%/);
+    assert.match(meta.stdout, /Falta\s+R\$ 2\.580,00/);
     assert.match(meta.stdout, /Aportes registrados\s+R\$ 800,00/);
+    assert.match(meta.stdout, /Projeção até março\/2027/);
+    assert.match(
+      meta.stdout,
+      /dezembro\/2026\s+R\$ 2\.800,00\s+-R\$ 433,00\s+-R\$ 230,89\s+-R\$ 280,00\s+R\$ 1\.856,11\s+R\$ 850,00\s+R\$ 1\.006,11\s+R\$ 2\.350,00/,
+    );
+    assert.match(
+      meta.stdout,
+      /março\/2027\s+R\$ 1\.700,00\s+-R\$ 433,00\s+-R\$ 95,42\s+R\$ 0,00\s+R\$ 1\.171,58\s+R\$ 850,00\s+R\$ 321,58\s+R\$ 4\.900,00/,
+    );
+    assert.match(meta.stdout, /Sobra após a compra\s+R\$ 20,00/);
   });
 });
 
@@ -187,12 +202,24 @@ test('simula a moto sem gravar', () => {
 
     const result = runCli(['simular', 'moto'], path);
     assert.equal(result.code, 0);
-    assert.match(result.stdout, /Cofrinho projetado\s+R\$ 14\.500,00/);
-    assert.match(result.stdout, /Entrada \+ 1ª parcela\s+R\$ 4\.280,00/);
-    assert.match(result.stdout, /Restante\s+R\$ 10\.220,00/);
-    assert.match(result.stdout, /Fluxo pós-compra\s+R\$ 487,00/);
-    assert.match(result.stdout, /Com aporte mantido\s+-R\$ 313,00/);
-    assert.match(result.stdout, /Última parcela\s+fevereiro\/2032/);
+    assert.match(result.stdout, /Cofrinho projetado\s+R\$ 4\.900,00/);
+    assert.match(result.stdout, /CNH\s+R\$ 100,00/);
+    assert.match(result.stdout, /Entrada\s+R\$ 3\.500,00/);
+    assert.match(result.stdout, /1ª parcela\s+R\$ 780,00/);
+    assert.match(result.stdout, /Capacete\s+R\$ 500,00/);
+    assert.match(result.stdout, /Total do desembolso\s+R\$ 4\.880,00/);
+    assert.match(result.stdout, /Restante\s+R\$ 20,00/);
+    assert.match(result.stdout, /Fluxo pós-compra\s+R\$ 391,58/);
+    assert.match(result.stdout, /Contratos ativos\s+R\$ 95,42\/mês até fevereiro\/2028/);
+    assert.match(result.stdout, /Fluxo após contratos\s+R\$ 487,00/);
+    assert.match(result.stdout, /Com aporte mantido\s+-R\$ 458,42/);
+    assert.match(result.stdout, /Última parcela\s+fevereiro\/2031/);
+    assert.match(result.stdout, /Cobertura do restante\s+menos de 1 mês/);
+
+    const custom = runCli(['simular', 'moto', '--cnh', '1000', '--capacete', '0'], path);
+    assert.match(custom.stdout, /CNH\s+R\$ 1\.000,00/);
+    assert.match(custom.stdout, /Capacete\s+R\$ 0,00/);
+    assert.match(custom.stdout, /Total do desembolso\s+R\$ 5\.280,00/);
 
     const db = openForCheck(path);
     try {

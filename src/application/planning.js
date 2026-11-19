@@ -3,11 +3,25 @@ import { addMonths, assertMonth, compareMonths, todayISO } from '../domain/dates
 import { contractOccurrence, ruleOccurrence } from '../domain/recurring.js';
 import { collectMonthlyTotals, accountBalanceThroughMonth } from '../domain/summary.js';
 import { listAccounts } from '../infrastructure/repositories/accounts.js';
+import { listCategories } from '../infrastructure/repositories/categories.js';
 import { listInstallmentPlans } from '../infrastructure/repositories/contracts.js';
 import { holidaySetFromDatabase } from '../infrastructure/repositories/holidays.js';
 import { listRecurringRules } from '../infrastructure/repositories/recurring.js';
 import { insertTransaction, listTransactions } from '../infrastructure/repositories/transactions.js';
 import { getActiveGoal } from '../infrastructure/repositories/goals.js';
+
+const FIXED_EXPENSE_CATEGORY_NAMES = new Set(['Energia', 'Internet']);
+
+function fixedExpenseCategoryIds(db) {
+  return new Set(
+    listCategories(db)
+      .filter(
+        (category) =>
+          category.type === 'despesa' && FIXED_EXPENSE_CATEGORY_NAMES.has(category.name),
+      )
+      .map((category) => category.id),
+  );
+}
 
 export function generateMonthTransactions(db, month) {
   assertMonth(month);
@@ -129,13 +143,16 @@ export function forecastMonth(db, { month, today = todayISO() } = {}) {
   const goal = getActiveGoal(db);
   const savingsAccountId = goal?.accountId ?? null;
   const plannedContributionCents = goal?.monthlyContributionCents ?? 0;
+  const fixedCategoryIds = fixedExpenseCategoryIds(db);
 
   const monthTotals = (targetMonth) => {
     const monthTransactions =
       compareMonths(targetMonth, currentMonthKey) <= 0
         ? transactions.filter((transaction) => transaction.month === targetMonth)
         : projectedMonthTransactions(db, targetMonth);
-    return collectMonthlyTotals(monthTransactions, accountsById, targetMonth);
+    return collectMonthlyTotals(monthTransactions, accountsById, targetMonth, {
+      fixedCategoryIds,
+    });
   };
 
   if (compareMonths(month, currentMonthKey) <= 0) {
@@ -156,6 +173,7 @@ export function forecastMonth(db, { month, today = todayISO() } = {}) {
         savingsAccountId,
       ),
       baseBalanceCents: cashBalanceAt(accounts, transactions, currentMonthKey),
+      currentMonth: null,
       months: [],
       targetMonth: month,
       isFuture: false,
@@ -178,6 +196,7 @@ export function forecastMonth(db, { month, today = todayISO() } = {}) {
   const remainingCurrentContribution = Math.max(0, currentContribution - paidContributions);
 
   let startCursor = addMonths(currentMonthKey, 1);
+  let currentMonthProjection = null;
 
   if (currentMonthTransactions.length === 0) {
     startCursor = currentMonthKey;
@@ -196,6 +215,31 @@ export function forecastMonth(db, { month, today = todayISO() } = {}) {
   );
   if (currentMonthTransactions.length > 0) {
     projectedSavingsCents += remainingCurrentContribution;
+
+    const currentTotals = collectMonthlyTotals(
+      currentMonthTransactions,
+      accountsById,
+      currentMonthKey,
+      { fixedCategoryIds },
+    );
+
+    currentMonthProjection = {
+      month: currentMonthKey,
+      incomeCents: currentTotals.incomePlannedCents,
+      fixedExpenseCents: currentTotals.fixedExpensePlannedCents,
+      contractExpenseCents: currentTotals.contractExpensePlannedCents,
+      otherExpenseCents: currentTotals.otherExpensePlannedCents,
+      expenseCents: currentTotals.expensePlannedCents,
+      availableCents: currentTotals.flowPlannedCents,
+      flowCents: currentTotals.flowPlannedCents,
+      plannedContributionCents: currentContribution,
+      contributionCents: remainingCurrentContribution,
+      netCents: currentTotals.flowPlannedCents - remainingCurrentContribution,
+      remainderCents: currentTotals.flowPlannedCents - remainingCurrentContribution,
+      balanceCents,
+      cashBalanceCents: balanceCents,
+      savingsBalanceCents: projectedSavingsCents,
+    };
   }
 
   const months = [];
@@ -203,22 +247,34 @@ export function forecastMonth(db, { month, today = todayISO() } = {}) {
 
   while (compareMonths(cursor, month) <= 0) {
     const monthTransactions = projectedMonthTransactions(db, cursor);
-    const totals = collectMonthlyTotals(monthTransactions, accountsById, cursor);
+    const totals = collectMonthlyTotals(monthTransactions, accountsById, cursor, {
+      fixedCategoryIds,
+    });
     const contribution =
       goal && compareMonths(cursor, goal.startMonth) >= 0 ? plannedContributionCents : 0;
-    const netCents = totals.flowPlannedCents - contribution;
+    const actualContributions = contributionsInMonth(monthTransactions, savingsAccountId, cursor);
+    const remainingContribution = Math.max(0, contribution - actualContributions);
+    const contributionCents = actualContributions + remainingContribution;
+    const netCents = totals.flowPlannedCents - contributionCents;
 
     balanceCents += netCents;
-    projectedSavingsCents += contribution;
+    projectedSavingsCents += contributionCents;
 
     months.push({
       month: cursor,
       incomeCents: totals.incomePlannedCents,
+      fixedExpenseCents: totals.fixedExpensePlannedCents,
+      contractExpenseCents: totals.contractExpensePlannedCents,
+      otherExpenseCents: totals.otherExpensePlannedCents,
       expenseCents: totals.expensePlannedCents,
       flowCents: totals.flowPlannedCents,
+      availableCents: totals.flowPlannedCents,
       plannedContributionCents: contribution,
+      contributionCents,
       netCents,
+      remainderCents: netCents,
       balanceCents,
+      cashBalanceCents: balanceCents,
       savingsBalanceCents: projectedSavingsCents,
     });
 
@@ -236,6 +292,9 @@ export function forecastMonth(db, { month, today = todayISO() } = {}) {
     incomeRealizedCents: 0,
     expensePlannedCents: last.expenseCents,
     expenseRealizedCents: 0,
+    fixedExpensePlannedCents: last.fixedExpenseCents,
+    contractExpensePlannedCents: last.contractExpenseCents,
+    otherExpensePlannedCents: last.otherExpenseCents,
     flowPlannedCents: last.flowCents,
     flowRealizedCents: 0,
     benefitExpensePlannedCents: 0,
@@ -246,6 +305,7 @@ export function forecastMonth(db, { month, today = todayISO() } = {}) {
     projectedBalanceCents: last.balanceCents,
     projectedSavingsCents: last.savingsBalanceCents,
     baseBalanceCents,
+    currentMonth: currentMonthProjection,
     months,
     targetMonth: month,
     isFuture: true,

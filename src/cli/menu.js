@@ -3,7 +3,7 @@ import { addMonths, todayISO } from '../domain/dates.js';
 import { parseMoneyToCents } from '../domain/money.js';
 import { listAccountsWithBalances } from '../application/accounts.js';
 import { listContracts } from '../application/contracts.js';
-import { motorcycleSimulation } from '../application/goals.js';
+import { goalProjection, goalProgress, motorcycleSimulation } from '../application/goals.js';
 import { forecastMonth } from '../application/planning.js';
 import { monthlyReport, weekReport } from '../application/reports.js';
 import {
@@ -35,6 +35,7 @@ const MENU_CHOICES = [
   { name: 'Ver semana', value: 'semana' },
   { name: 'Pagar pendência', value: 'pagar' },
   { name: 'Contratos', value: 'contratos' },
+  { name: 'Meta e projeção', value: 'meta' },
   { name: 'Previsão do próximo mês', value: 'previsao' },
   { name: 'Simulação da moto', value: 'simulacao' },
   { name: 'Sair', value: 'sair' },
@@ -132,6 +133,11 @@ async function handleMenuAction(action, { db, today, prompts, output }) {
 
     case 'contratos': {
       output(renderContracts(listContracts(db)));
+      return true;
+    }
+
+    case 'meta': {
+      output(renderGoal(goalProgress(db, { today }), goalProjection(db, { today })));
       return true;
     }
 

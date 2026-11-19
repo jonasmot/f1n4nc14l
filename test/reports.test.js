@@ -31,9 +31,9 @@ test('resumo mensal de dezembro e janeiro', () => {
     assert.equal(december.incomePlannedCents, 280000);
     assert.equal(december.expensePlannedCents, 94389);
     assert.equal(december.flowPlannedCents, 185611);
-    assert.equal(december.plannedContributionCents, 80000);
-    assert.equal(december.availableAfterContributionCents, 105611);
-    assert.equal(december.savingsBalanceCents, 170000);
+    assert.equal(december.plannedContributionCents, 85000);
+    assert.equal(december.availableAfterContributionCents, 100611);
+    assert.equal(december.savingsBalanceCents, 150000);
     assert.equal(december.contractRemainingCents, 129021);
     assert.deepEqual(
       december.benefits.map((benefit) => [benefit.name, benefit.balanceCents]),
@@ -47,7 +47,7 @@ test('resumo mensal de dezembro e janeiro', () => {
     assert.equal(january.incomePlannedCents, 170000);
     assert.equal(january.expensePlannedCents, 57428);
     assert.equal(january.flowPlannedCents, 112572);
-    assert.equal(january.availableAfterContributionCents, 32572);
+    assert.equal(january.availableAfterContributionCents, 27572);
     assert.equal(january.cashBalanceCents, 0);
   } finally {
     db.close();
@@ -132,9 +132,9 @@ test('evolução mostra três meses com saldo do cofrinho', () => {
     assert.deepEqual(
       evolution.map((row) => [row.month, row.incomeCents, row.savingsBalanceCents]),
       [
-        ['2026-10', 0, 170000],
-        ['2026-11', 0, 170000],
-        ['2026-12', 170000, 250000],
+        ['2026-10', 0, 150000],
+        ['2026-11', 0, 150000],
+        ['2026-12', 170000, 230000],
       ],
     );
   } finally {
@@ -178,7 +178,7 @@ test('resumo semanal com gastos, pendências e benefícios', () => {
     assert.equal(week.upcoming.length, 2);
     assert.equal(week.upcoming[1].description, 'Contrato 2 (2/5)');
     assert.equal(week.upcoming[1].effectiveDate, '2026-12-10');
-    assert.equal(week.availableAfterContributionCents, 103021);
+    assert.equal(week.availableAfterContributionCents, 98021);
 
     const afterReceipt = db
       .prepare("SELECT status FROM transactions WHERE description = 'Crédito VA'")

@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { openDatabase } from '../src/infrastructure/db.js';
-import { currentVersion, migrate } from '../src/infrastructure/migrator.js';
+import { currentVersion, listMigrations, migrate } from '../src/infrastructure/migrator.js';
 import { seedCounts, seedDatabase } from '../src/infrastructure/seed.js';
 import { getAccount, getAccountByName, listAccounts, updateInitialBalance } from '../src/infrastructure/repositories/accounts.js';
 import { listCategories } from '../src/infrastructure/repositories/categories.js';
@@ -32,7 +32,7 @@ function memoryDatabase() {
 test('aplica a migração inicial e o seed', () => {
   const db = memoryDatabase();
   try {
-    assert.equal(currentVersion(db), 1);
+    assert.equal(currentVersion(db), 3);
     assert.equal(db.prepare('PRAGMA foreign_keys').get().foreign_keys, 1);
 
     assert.deepEqual(seedCounts(db), {
@@ -51,7 +51,7 @@ test('aplica a migração inicial e o seed', () => {
       [
         ['conta-corrente', 'corrente', 0],
         ['carteira', 'carteira', 0],
-        ['cofrinho', 'cofrinho', 170000],
+        ['cofrinho', 'cofrinho', 150000],
         ['flash-va', 'beneficio', 0],
         ['flash-vt', 'beneficio', 0],
       ],
@@ -65,9 +65,70 @@ test('aplica a migração inicial e o seed', () => {
     assert.equal(contractRemainingCents(listInstallmentPlans(db)[0]), 9172);
     assert.equal(listRecurringRules(db).length, 7);
     assert.equal(listRecurringRules(db)[0].dayRule, 'business_day');
-    assert.equal(getActiveGoal(db).targetCents, 350000);
+    assert.equal(getActiveGoal(db).targetCents, 488000);
     assert.equal(listGoals(db).length, 1);
     assert.equal(listHolidays(db).length, 30);
+  } finally {
+    db.close();
+  }
+});
+
+test('migrações 002 e 003 revisam o plano antigo da moto', () => {
+  const db = openDatabase({ path: ':memory:' });
+  try {
+    const migrations = listMigrations();
+    migrate(db, { migrations: migrations.filter((migration) => migration.version === 1) });
+    seedDatabase(db);
+    db.prepare('UPDATE accounts SET initial_balance_cents = 170000 WHERE id = 3').run();
+    db.prepare(
+      `UPDATE goals
+       SET target_cents = 350000, target_month = '2028-03', monthly_contribution_cents = 80000
+       WHERE id = 1`,
+    ).run();
+
+    const applied = migrate(db, { migrations });
+
+    assert.deepEqual(applied, [2, 3]);
+    assert.equal(getAccount(db, 3).initialBalanceCents, 150000);
+    const goal = getActiveGoal(db);
+    assert.equal(goal.targetCents, 488000);
+    assert.equal(goal.targetMonth, '2027-03');
+    assert.equal(goal.monthlyContributionCents, 85000);
+  } finally {
+    db.close();
+  }
+});
+
+test('migração 003 corrige a meta sem perder lançamentos', () => {
+  const db = openDatabase({ path: ':memory:' });
+  try {
+    const migrations = listMigrations();
+    migrate(db, { migrations: migrations.filter((migration) => migration.version <= 2) });
+    seedDatabase(db);
+    insertTransaction(db, {
+      month: '2026-12',
+      date: '2026-12-09',
+      type: 'despesa',
+      amountCents: 2590,
+      accountId: 1,
+      categoryId: 7,
+      description: 'Feira',
+      status: 'pago',
+    });
+    db.prepare(
+      `UPDATE goals
+       SET target_cents = 628000, monthly_contribution_cents = 120000
+       WHERE id = 1`,
+    ).run();
+
+    const applied = migrate(db, { migrations });
+
+    assert.deepEqual(applied, [3]);
+    const goal = getActiveGoal(db);
+    assert.equal(goal.targetCents, 488000);
+    assert.equal(goal.monthlyContributionCents, 85000);
+    assert.equal(listTransactions(db).length, 1);
+    assert.equal(listTransactions(db)[0].description, 'Feira');
   } finally {
     db.close();
   }
@@ -195,9 +256,9 @@ test('views do DB Browser mostram valores em reais', () => {
 
     const meta = db.prepare('SELECT * FROM v_metas').get();
     assert.equal(meta.meta, 'Moto');
-    assert.equal(meta.alvo_reais, 3500);
-    assert.equal(meta.saldo_reais, 1700);
-    assert.equal(meta.percentual, 48.6);
+    assert.equal(meta.alvo_reais, 4880);
+    assert.equal(meta.saldo_reais, 1500);
+    assert.equal(meta.percentual, 30.7);
 
     assert.equal(db.prepare('SELECT * FROM v_beneficios').all().length, 0);
   } finally {

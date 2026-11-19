@@ -37,7 +37,7 @@ test('lista contas com saldos derivados', () => {
     const accounts = listAccountsWithBalances(db, { month: '2026-12' });
     const byName = Object.fromEntries(accounts.map((account) => [account.name, account]));
     assert.equal(byName['conta-corrente'].balanceCents, 0);
-    assert.equal(byName.cofrinho.balanceCents, 170000);
+    assert.equal(byName.cofrinho.balanceCents, 150000);
     assert.equal(byName['flash-va'].balanceCents, 0);
   } finally {
     db.close();
@@ -71,7 +71,7 @@ test('transferência move saldos sem virar receita ou despesa', () => {
     const accounts = listAccountsWithBalances(db);
     const byName = Object.fromEntries(accounts.map((account) => [account.name, account]));
     assert.equal(byName['conta-corrente'].balanceCents, -80000);
-    assert.equal(byName.cofrinho.balanceCents, 250000);
+    assert.equal(byName.cofrinho.balanceCents, 230000);
 
     const transactions = listTransactions(db);
     assert.equal(transactions.filter((transaction) => transaction.type === 'receita').length, 0);

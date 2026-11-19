@@ -82,7 +82,7 @@ Tabelas: `accounts`, `categories`, `transactions`, `recurring_rules`, `installme
 
 - **Por quê:** o usuário pode rodar o comando várias vezes sem medo.
 - **Regra:** a abertura nunca altera lançamentos manuais e nunca reabre lançamentos cancelados.
-- **Aporte:** o aporte planejado da meta não é uma transação automática. Ele entra apenas em projeções e no “disponível após aporte”; o cofrinho só muda com `fin transferir`. Isso evita duplicar o aporte quando o valor real for diferente de R$ 800.
+- **Aporte:** o aporte planejado da meta não é uma transação automática. Ele entra apenas em projeções e no “disponível após aporte”; o cofrinho só muda com `fin transferir`. Isso evita duplicar o aporte quando o valor real for diferente de R$ 850.
 
 ### 7. Benefícios VA/VT separados do caixa
 
@@ -118,11 +118,15 @@ As views do DB Browser replicam os mesmos conceitos em reais para consulta indep
 Contas: `conta-corrente`, `carteira`, `cofrinho`, `flash-va`, `flash-vt`.
 Contratos: C1 45,86 (2 restantes), C2 14,22 (4), C3 64,60 (15), C4 16,60 (5), C5 89,61 (1).
 Regras: salário 1.700 (5º dia útil), 13º 1.100 (18/12), energia 300, internet 133, VA 500, VT 200.
-Meta: Moto, 3.500 até 2028-03, aporte 800, início 2026-12.
+Meta: Moto, 4.880 até 2027-03 (CNH 100 + entrada 3.500 + primeira parcela 780 + capacete 500), aporte 850, início 2026-12. Cofrinho inicial de 1.500.
 
 ### 11. Simulação da moto
 
-`fin simular moto` é cálculo puro, sem escrita. Meses de aporte = do mês inicial da meta (ou mês corrente, o que for maior) até o mês da compra, inclusive. Saída = entrada + primeira parcela. Fluxo pós-compra = salário − contas fixas − parcela; se o aporte continuar, subtrai o aporte. Cobertura do cofrinho = saldo restante ÷ déficit mensal.
+`fin simular moto` é cálculo puro, sem escrita. Meses de aporte = do mês inicial da meta (ou mês corrente, o que for maior) até o mês da compra, inclusive. Desembolso = CNH + entrada + primeira parcela + capacete. Fluxo pós-compra = salário − contas fixas − parcelas de contratos ativas − parcela da moto; após o término dos contratos, remove as parcelas de contrato. Se o aporte continuar, subtrai o aporte. Cobertura do cofrinho = saldo restante ÷ déficit mensal.
+
+### 12. Projeção mensal da meta
+
+`fin meta` combina o progresso real do cofrinho com `forecastMonth` para exibir uma linha por mês, do mês corrente (ou início da meta) até o mês-alvo. Cada linha separa entradas, contas fixas (Energia e Internet), contratos (`origin = 'contrato'`), outros gastos, disponível, aporte planejado, sobra e saldo projetado do cofrinho. No mês corrente, o aporte exibido desconta o que já foi transferido. A projeção não grava lançamentos e termina com a sobra ou falta após o desembolso da compra.
 
 ## Risks / Trade-offs
 

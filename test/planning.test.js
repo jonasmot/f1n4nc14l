@@ -63,7 +63,7 @@ test('abre dezembro de 2026 com 12 previstos', () => {
     assert.equal(summary.incomePlannedCents, 280000);
     assert.equal(summary.expensePlannedCents, 94389);
     assert.equal(summary.flowPlannedCents, 185611);
-    assert.equal(summary.availableAfterContributionCents, 105611);
+    assert.equal(summary.availableAfterContributionCents, 100611);
   } finally {
     db.close();
   }
@@ -106,7 +106,7 @@ test('abre janeiro de 2027 com 9 previstos e sem contrato 5', () => {
     assert.equal(summary.incomePlannedCents, 170000);
     assert.equal(summary.expensePlannedCents, 57428);
     assert.equal(summary.flowPlannedCents, 112572);
-    assert.equal(summary.availableAfterContributionCents, 32572);
+    assert.equal(summary.availableAfterContributionCents, 27572);
   } finally {
     db.close();
   }
@@ -119,12 +119,15 @@ test('previsão de janeiro não grava e mostra os números do plano', () => {
 
     const forecast = forecastMonth(db, { month: '2027-01', today: '2026-11-18' });
     assert.equal(forecast.incomePlannedCents, 170000);
+    assert.equal(forecast.fixedExpensePlannedCents, 43300);
+    assert.equal(forecast.contractExpensePlannedCents, 14128);
+    assert.equal(forecast.otherExpensePlannedCents, 0);
     assert.equal(forecast.expensePlannedCents, 57428);
     assert.equal(forecast.flowPlannedCents, 112572);
-    assert.equal(forecast.plannedContributionCents, 80000);
-    assert.equal(forecast.availableAfterContributionCents, 32572);
-    assert.equal(forecast.projectedBalanceCents, 138183);
-    assert.equal(forecast.projectedSavingsCents, 330000);
+    assert.equal(forecast.plannedContributionCents, 85000);
+    assert.equal(forecast.availableAfterContributionCents, 27572);
+    assert.equal(forecast.projectedBalanceCents, 128183);
+    assert.equal(forecast.projectedSavingsCents, 320000);
     assert.equal(forecast.isFuture, true);
     assert.equal(listTransactions(db).length, 0);
   } finally {
@@ -137,17 +140,20 @@ test('previsão de dezembro e fevereiro', () => {
   try {
     const december = forecastMonth(db, { month: '2026-12', today: '2026-11-18' });
     assert.equal(december.incomePlannedCents, 280000);
+    assert.equal(december.fixedExpensePlannedCents, 43300);
+    assert.equal(december.contractExpensePlannedCents, 23089);
+    assert.equal(december.otherExpensePlannedCents, 28000);
     assert.equal(december.expensePlannedCents, 94389);
-    assert.equal(december.availableAfterContributionCents, 105611);
-    assert.equal(december.projectedBalanceCents, 105611);
-    assert.equal(december.projectedSavingsCents, 250000);
+    assert.equal(december.availableAfterContributionCents, 100611);
+    assert.equal(december.projectedBalanceCents, 100611);
+    assert.equal(december.projectedSavingsCents, 235000);
 
     const february = forecastMonth(db, { month: '2027-02', today: '2026-11-18' });
     assert.equal(february.incomePlannedCents, 170000);
     assert.equal(february.expensePlannedCents, 52842);
-    assert.equal(february.availableAfterContributionCents, 37158);
-    assert.equal(february.projectedBalanceCents, 175341);
-    assert.equal(february.projectedSavingsCents, 410000);
+    assert.equal(february.availableAfterContributionCents, 32158);
+    assert.equal(february.projectedBalanceCents, 160341);
+    assert.equal(february.projectedSavingsCents, 405000);
   } finally {
     db.close();
   }
@@ -158,10 +164,10 @@ test('previsão usa o saldo real quando o mês corrente já tem dados', () => {
   try {
     openMonth(db, { month: '2026-12' });
     const forecast = forecastMonth(db, { month: '2027-01', today: '2026-11-18' });
-    assert.equal(forecast.projectedBalanceCents, 138183);
+    assert.equal(forecast.projectedBalanceCents, 128183);
 
     const afterTransfer = forecastMonth(db, { month: '2027-01', today: '2026-11-18' });
-    assert.equal(afterTransfer.projectedBalanceCents, 138183);
+    assert.equal(afterTransfer.projectedBalanceCents, 128183);
   } finally {
     db.close();
   }
@@ -172,16 +178,16 @@ test('aporte planejado não vira transferência automática', () => {
   try {
     openMonth(db, { month: '2026-12' });
     const before = getAccount(db, 3);
-    assert.equal(before.initialBalanceCents, 170000);
+    assert.equal(before.initialBalanceCents, 150000);
 
     const summaryBefore = monthSummary(db, '2026-12');
-    assert.equal(summaryBefore.savingsBalanceCents, 170000);
-    assert.equal(summaryBefore.plannedContributionCents, 80000);
+    assert.equal(summaryBefore.savingsBalanceCents, 150000);
+    assert.equal(summaryBefore.plannedContributionCents, 85000);
 
     transfer(db, { amountCents: 50000, from: 'conta-corrente', to: 'cofrinho', date: '2026-12-10' });
     const summaryAfter = monthSummary(db, '2026-12');
-    assert.equal(summaryAfter.savingsBalanceCents, 220000);
-    assert.equal(summaryAfter.plannedContributionCents, 80000);
+    assert.equal(summaryAfter.savingsBalanceCents, 200000);
+    assert.equal(summaryAfter.plannedContributionCents, 85000);
   } finally {
     db.close();
   }

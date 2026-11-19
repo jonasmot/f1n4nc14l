@@ -57,9 +57,9 @@ test('fluxo completo: init, mês, aporte, relatórios, previsão, simulação e 
     assert.match(summary.stdout, /Receitas previstas\s+R\$ 2\.800,00/);
     assert.match(summary.stdout, /Despesas previstas\s+R\$ 943,89/);
     assert.match(summary.stdout, /Fluxo previsto\s+R\$ 1\.856,11/);
-    assert.match(summary.stdout, /Disponível após aporte\s+R\$ 1\.056,11/);
+    assert.match(summary.stdout, /Disponível após aporte\s+R\$ 1\.006,11/);
     assert.match(summary.stdout, /Caixa\s+-R\$ 800,00/);
-    assert.match(summary.stdout, /Cofrinho\s+R\$ 2\.500,00/);
+    assert.match(summary.stdout, /Cofrinho\s+R\$ 2\.300,00/);
     assert.match(summary.stdout, /VA\s+R\$ 500,00/);
     assert.match(summary.stdout, /VT\s+R\$ 200,00/);
 
@@ -67,19 +67,23 @@ test('fluxo completo: init, mês, aporte, relatórios, previsão, simulação e 
     assert.match(forecast.stdout, /Receitas previstas\s+R\$ 1\.700,00/);
     assert.match(forecast.stdout, /Despesas previstas\s+R\$ 574,28/);
     assert.match(forecast.stdout, /Fluxo previsto\s+R\$ 1\.125,72/);
-    assert.match(forecast.stdout, /Disponível após aporte\s+R\$ 325,72/);
-    assert.match(forecast.stdout, /Saldo projetado\s+R\$ 1\.381,83/);
-    assert.match(forecast.stdout, /Cofrinho projetado\s+R\$ 3\.300,00/);
+    assert.match(forecast.stdout, /Disponível após aporte\s+R\$ 275,72/);
+    assert.match(forecast.stdout, /Saldo projetado\s+R\$ 1\.281,83/);
+    assert.match(forecast.stdout, /Cofrinho projetado\s+R\$ 3\.200,00/);
 
     const simulation = run(['simular', 'moto'], dbPath);
-    assert.match(simulation.stdout, /Cofrinho projetado\s+R\$ 15\.300,00/);
-    assert.match(simulation.stdout, /Entrada \+ 1ª parcela\s+R\$ 4\.280,00/);
-    assert.match(simulation.stdout, /Restante\s+R\$ 11\.020,00/);
-    assert.match(simulation.stdout, /Última parcela\s+fevereiro\/2032/);
+    assert.match(simulation.stdout, /Cofrinho projetado\s+R\$ 5\.700,00/);
+    assert.match(simulation.stdout, /Total do desembolso\s+R\$ 4\.880,00/);
+    assert.match(simulation.stdout, /Restante\s+R\$ 820,00/);
+    assert.match(simulation.stdout, /Última parcela\s+fevereiro\/2031/);
+
+    const goal = run(['meta'], dbPath);
+    assert.match(goal.stdout, /Projeção até março\/2027/);
+    assert.match(goal.stdout, /Sobra após a compra\s+R\$ 20,00/);
 
     const db = openDatabase({ path: dbPath });
     try {
-      assert.equal(currentVersion(db), 1);
+      assert.equal(currentVersion(db), 3);
       assert.deepEqual(seedCounts(db), {
         accounts: 5,
         categories: 13,
@@ -108,8 +112,8 @@ test('fluxo completo: init, mês, aporte, relatórios, previsão, simulação e 
       assert.equal(contratos.reduce((total, row) => total + row.falta_reais, 0).toFixed(2), '1290.21');
 
       const meta = db.prepare('SELECT * FROM v_metas').get();
-      assert.equal(meta.saldo_reais, 2500);
-      assert.equal(meta.percentual, 71.4);
+      assert.equal(meta.saldo_reais, 2300);
+      assert.equal(meta.percentual, 47.1);
 
       const beneficios = db
         .prepare("SELECT * FROM v_beneficios WHERE mes = '2026-12' ORDER BY conta")

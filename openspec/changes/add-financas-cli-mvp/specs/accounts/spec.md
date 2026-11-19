@@ -45,9 +45,9 @@ O sistema SHALL tratar VA e VT como contas de benefício separadas, creditadas n
 
 ### Requirement: Saldos iniciais do seed
 
-O sistema SHALL iniciar em 01/12/2026 com conta corrente R$ 0,00, carteira R$ 0,00, cofrinho R$ 1.700,00, VA R$ 0,00 e VT R$ 0,00, além dos créditos de VA e VT do próprio dia 1º.
+O sistema SHALL iniciar em 01/12/2026 com conta corrente R$ 0,00, carteira R$ 0,00, cofrinho R$ 1.500,00, VA R$ 0,00 e VT R$ 0,00, além dos créditos de VA e VT do próprio dia 1º.
 
 #### Scenario: Primeiro dia de dezembro
 
 - **WHEN** o banco é inicializado e o mês de dezembro/2026 é aberto
-- **THEN** a conta corrente parte de R$ 0,00, o cofrinho de R$ 1.700,00 e os benefícios recebem R$ 500,00 de VA e R$ 200,00 de VT
+- **THEN** a conta corrente parte de R$ 0,00, o cofrinho de R$ 1.500,00 e os benefícios recebem R$ 500,00 de VA e R$ 200,00 de VT

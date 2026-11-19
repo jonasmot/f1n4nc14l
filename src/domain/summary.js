@@ -61,13 +61,21 @@ export function benefitBalanceCents(account, transactions, month) {
   return balance;
 }
 
-export function collectMonthlyTotals(transactions, accountsById, month) {
+export function collectMonthlyTotals(
+  transactions,
+  accountsById,
+  month,
+  { fixedCategoryIds = new Set() } = {},
+) {
   const totals = {
     month,
     incomePlannedCents: 0,
     incomeRealizedCents: 0,
     expensePlannedCents: 0,
     expenseRealizedCents: 0,
+    fixedExpensePlannedCents: 0,
+    contractExpensePlannedCents: 0,
+    otherExpensePlannedCents: 0,
     benefitExpensePlannedCents: 0,
     benefitExpenseRealizedCents: 0,
   };
@@ -90,6 +98,13 @@ export function collectMonthlyTotals(transactions, accountsById, month) {
       if (transaction.status === 'recebido') totals.incomeRealizedCents += transaction.amountCents;
     } else {
       totals.expensePlannedCents += transaction.amountCents;
+      if (transaction.origin === 'contrato') {
+        totals.contractExpensePlannedCents += transaction.amountCents;
+      } else if (fixedCategoryIds.has(transaction.categoryId)) {
+        totals.fixedExpensePlannedCents += transaction.amountCents;
+      } else {
+        totals.otherExpensePlannedCents += transaction.amountCents;
+      }
       if (transaction.status === 'pago') totals.expenseRealizedCents += transaction.amountCents;
     }
   }

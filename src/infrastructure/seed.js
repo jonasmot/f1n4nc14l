@@ -3,7 +3,7 @@ import { NATIONAL_HOLIDAYS } from '../domain/business-days.js';
 const ACCOUNTS = [
   ['conta-corrente', 'corrente', 0, '2026-12-01', 1],
   ['carteira', 'carteira', 0, '2026-12-01', 1],
-  ['cofrinho', 'cofrinho', 170000, '2026-12-01', 0],
+  ['cofrinho', 'cofrinho', 150000, '2026-12-01', 0],
   ['flash-va', 'beneficio', 0, '2026-12-01', 1],
   ['flash-vt', 'beneficio', 0, '2026-12-01', 1],
 ];
@@ -80,7 +80,7 @@ export function seedDatabase(db) {
     db.prepare(`
       INSERT OR IGNORE INTO goals
         (id, name, target_cents, target_month, monthly_contribution_cents, start_month, account_id)
-      VALUES (1, 'Moto', 350000, '2028-03', 80000, '2026-12', 3)
+      VALUES (1, 'Moto', 488000, '2027-03', 85000, '2026-12', 3)
     `).run();
 
     const insertHoliday = db.prepare('INSERT OR IGNORE INTO holidays (date, name) VALUES (?, ?)');

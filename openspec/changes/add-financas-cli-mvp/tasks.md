@@ -13,8 +13,8 @@
 - [x] 2.2 Implementar `domain/dates.js` com validação ISO, mês `YYYY-MM`, último dia, soma de meses e formatação pt-BR; verificar com testes de virada de ano e fevereiro bissexto
 - [x] 2.3 Implementar `domain/business-days.js` com feriados e cálculo do n-ésimo dia útil; verificar que dez/2026 retorna 07/12, jan/2027 retorna 08/01 e fev/2027 retorna 05/02
 - [x] 2.4 Implementar `domain/schedule.js` com agenda e saldo restante de contratos; verificar total de R$ 1.290,21 e términos jan/2027, mar/2027, fev/2028, abr/2027 e dez/2026
-- [x] 2.5 Implementar `domain/summary.js` com totais previstos/realizados, fluxo, disponível e patrimônio; verificar dez/2026 com fluxo R$ 1.856,11 e disponível R$ 1.056,11 após aporte de R$ 800,00
-- [x] 2.6 Implementar a simulação da moto no domínio; verificar cofrinho de R$ 14.500,00, saída de R$ 4.280,00, restante de R$ 10.220,00, fluxo de R$ 487,00, fluxo com aporte de −R$ 313,00 e última parcela em fev/2032
+- [x] 2.5 Implementar `domain/summary.js` com totais previstos/realizados, fluxo, disponível, patrimônio e quebra de despesas em fixas, contratos e outras; verificar dez/2026 com fluxo R$ 1.856,11 e disponível R$ 1.006,11 após aporte de R$ 850,00
+- [x] 2.6 Implementar a simulação da moto no domínio; verificar cofrinho de R$ 4.900,00, desembolso de R$ 4.880,00, restante de R$ 20,00, fluxo de R$ 391,58 com contratos ativos, R$ 487,00 após os contratos, −R$ 458,42 mantendo o aporte e última parcela em fev/2031
 
 ## 3. Persistência SQLite
 
@@ -22,7 +22,7 @@
 - [x] 3.2 Implementar o executor de migrações transacional com `schema_migrations`; verificar que reaplicar não duplica versões e que falha faz rollback
 - [x] 3.3 Criar a migração `001_initial.sql` com todas as tabelas, checks, índices e o índice único de idempotência `(origin, origin_id, month)`; verificar o schema com `PRAGMA table_info` e um teste de constraint
 - [x] 3.4 Criar as views `v_lancamentos`, `v_resumo_mensal`, `v_categorias`, `v_contratos`, `v_metas` e `v_beneficios` em reais; verificar cada view com dados de teste
-- [x] 3.5 Implementar o seed idempotente com contas, categorias, feriados, cinco contratos, seis regras, meta e autoescola; verificar contagens e valores após rodar `init` duas vezes
+- [x] 3.5 Implementar o seed idempotente com contas, categorias, feriados, cinco contratos, sete regras, meta e autoescola; verificar contagens e valores após rodar `init` duas vezes
 - [x] 3.6 Implementar repositórios de contas, categorias e configurações; verificar CRUD e leitura de saldos derivados
 - [x] 3.7 Implementar repositório de transações com filtros por mês, status, categoria, conta e tipo; verificar criação, edição, cancelamento e somas
 - [x] 3.8 Implementar repositórios de recorrências, contratos e metas; verificar leitura das regras ativas e da agenda de parcelas
@@ -39,7 +39,7 @@
 - [x] 5.1 Implementar geração de lançamentos a partir de regras recorrentes, incluindo salário no 5º dia útil, 13º anual, contas fixas e créditos VA/VT; verificar as datas e valores de dez/2026
 - [x] 5.2 Implementar geração de parcelas de contratos a partir de `paid_before_start`, `next_month` e `total_installments`; verificar que dez/2026 soma R$ 230,89 e que o Contrato 5 não aparece em jan/2027
 - [x] 5.3 Implementar `mes abrir` idempotente e transacional; verificar 12 lançamentos em dez/2026, 9 em jan/2027 e zero duplicados na segunda execução
-- [x] 5.4 Implementar `previsao` sem escrita, reutilizando o cálculo de geração; verificar jan/2027 com receitas R$ 1.700,00, despesas R$ 574,28, fluxo R$ 1.125,72 e disponível R$ 325,72
+- [x] 5.4 Implementar `previsao` sem escrita, reutilizando o cálculo de geração; verificar jan/2027 com receitas R$ 1.700,00, despesas R$ 574,28, fluxo R$ 1.125,72 e disponível de R$ 275,72
 - [x] 5.5 Garantir que o aporte planejado não gera transferência automática e que o cofrinho reflete apenas transferências reais; verificar com um aporte de R$ 500,00
 
 ## 6. Relatórios
@@ -51,8 +51,9 @@
 
 ## 7. Meta e simulação
 
-- [x] 7.1 Implementar progresso da meta, aportes e retiradas do cofrinho, com percentual e impacto no prazo; verificar meta de R$ 3.500,00 e saldo inicial de R$ 1.700,00
+- [x] 7.1 Implementar progresso da meta, aportes e retiradas do cofrinho, com percentual e impacto no prazo; verificar meta de R$ 4.880,00 e saldo inicial de R$ 1.500,00
 - [x] 7.2 Implementar `simular moto` como cálculo puro com os parâmetros padrão e cobertura do saldo restante; verificar que nenhuma escrita ocorre no banco
+- [x] 7.3 Implementar a projeção mensal da meta com entradas, contas fixas, contratos, outros gastos, disponível, aporte, sobra e cofrinho; verificar dez/2026 a mar/2027 e a sobra de R$ 20,00 após a compra
 
 ## 8. CLI e menu
 

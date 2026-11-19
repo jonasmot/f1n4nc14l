@@ -13,7 +13,7 @@ O controle financeiro atual vive em um script hardcoded (`f1n4nc14l.js`), sem ba
 - Modelar contas (corrente, carteira, cofrinho, VA, VT), transferências, benefícios mensais sem carryover, recorrências (salário, 13º, energia, internet, VA/VT) e os 5 contratos com parcelas restantes.
 - Implementar `fin mes abrir <YYYY-MM>` idempotente, que gera os lançamentos previstos do mês a partir de recorrências e contratos, e `fin previsao` que projeta sem gravar.
 - Implementar relatórios derivados: resumo mensal, gastos por categoria, evolução mês a mês e resumo semanal com “disponível”.
-- Implementar a meta do cofrinho (moto: entrada de R$ 3.500, aporte planejado de R$ 800/mês) e a simulação de financiamento R$ 780 × 48 sem gravar dados.
+- Implementar a meta do cofrinho (moto: CNH R$ 100, entrada R$ 3.500, primeira parcela R$ 780 e capacete R$ 500, total R$ 4.880 até março/2027, aporte planejado de R$ 850/mês), a projeção mês a mês e a simulação de financiamento R$ 780 × 48 sem gravar dados.
 - Criar menu interativo em pt-BR, além dos comandos, e documentar uso e backup manual no README.
 - Substituir o `.gitignore` de Python por regras Node/SQLite que excluem `data/` e arquivos `*.db`; nenhum dado financeiro pode ser commitado.
 

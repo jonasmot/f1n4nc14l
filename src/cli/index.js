@@ -7,7 +7,7 @@ import { parseMoneyToCents } from '../domain/money.js';
 import { listAccountsWithBalances } from '../application/accounts.js';
 import { adjustInitialBalance, transfer } from '../application/accounts.js';
 import { editContract, listContracts } from '../application/contracts.js';
-import { goalProgress, motorcycleSimulation } from '../application/goals.js';
+import { goalProjection, goalProgress, motorcycleSimulation } from '../application/goals.js';
 import { resolveAccount, resolveCategoryAny } from '../application/lookups.js';
 import { forecastMonth, openMonth } from '../application/planning.js';
 import { categoryReport, evolutionReport, monthlyReport, weekReport } from '../application/reports.js';
@@ -559,7 +559,7 @@ export function buildProgram() {
     .description('Mostra o progresso da meta do cofrinho')
     .action(() =>
       run((db) => {
-        console.log(renderGoal(goalProgress(db)));
+        console.log(renderGoal(goalProgress(db), goalProjection(db)));
       }),
     );
 
@@ -567,10 +567,12 @@ export function buildProgram() {
 
   simulate
     .command('moto')
-    .description('Simula a compra da moto com entrada e parcelas')
+    .description('Simula a compra da moto com CNH, entrada, parcelas e capacete')
+    .option('--cnh <valor>', 'valor da CNH')
     .option('--entrada <valor>', 'valor da entrada')
     .option('--parcela <valor>', 'valor da parcela')
     .option('--parcelas <quantidade>', 'quantidade de parcelas')
+    .option('--capacete <valor>', 'valor do capacete')
     .option('--mes <AAAA-MM>', 'mês da compra')
     .option('--aporte <valor>', 'aporte mensal durante a simulação')
     .action((options) =>
@@ -578,10 +580,13 @@ export function buildProgram() {
         const simulation = motorcycleSimulation(
           db,
           {
+            cnhCents: options.cnh === undefined ? undefined : parseMoneyToCents(options.cnh),
             entryCents: options.entrada === undefined ? undefined : parseMoneyToCents(options.entrada),
             installmentCents:
               options.parcela === undefined ? undefined : parseMoneyToCents(options.parcela),
             installments: options.parcelas === undefined ? undefined : Number(options.parcelas),
+            helmetCents:
+              options.capacete === undefined ? undefined : parseMoneyToCents(options.capacete),
             purchaseMonth: options.mes,
             contributionCents:
               options.aporte === undefined ? undefined : parseMoneyToCents(options.aporte),

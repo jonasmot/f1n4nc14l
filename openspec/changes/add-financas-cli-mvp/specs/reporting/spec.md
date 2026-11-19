@@ -13,7 +13,7 @@ O sistema SHALL exibir, para um mês, receitas previstas e realizadas, despesas 
 #### Scenario: Resumo de dezembro de 2026
 
 - **WHEN** o usuário executa `fin resumo --mes 2026-12`
-- **THEN** o sistema mostra R$ 2.800,00 de receitas previstas, R$ 943,89 de despesas previstas e R$ 1.856,11 de fluxo previsto, além de R$ 800,00 de aporte planejado e R$ 1.056,11 disponíveis após o aporte
+- **THEN** o sistema mostra R$ 2.800,00 de receitas previstas, R$ 943,89 de despesas previstas e R$ 1.856,11 de fluxo previsto, além de R$ 850,00 de aporte planejado e R$ 1.006,11 disponíveis após o aporte
 
 #### Scenario: Valores realizados separados
 
