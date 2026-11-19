@@ -1,0 +1,29 @@
+{
+  "name": "financas-cli",
+  "version": "0.1.0",
+  "description": "Controle financeiro pessoal em português, local e offline.",
+  "type": "module",
+  "bin": {
+    "fin": "./bin/fin.js"
+  },
+  "engines": {
+    "node": ">=26.0.0"
+  },
+  "scripts": {
+    "start": "node ./bin/fin.js",
+    "test": "node --test",
+    "test:watch": "node --test --watch"
+  },
+  "keywords": [
+    "financas",
+    "cli",
+    "sqlite",
+    "financas-pessoais"
+  ],
+  "author": "jonasmot",
+  "license": "MIT",
+  "dependencies": {
+    "@inquirer/prompts": "^8.8.0",
+    "commander": "^15.1.0"
+  }
+}
